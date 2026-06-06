@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClimateLenz - Align & Paste Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2E7D32;
+            --primary-dark: #1B5E20;
+            --secondary: #81C784;
+            --bg: #F1F8E9;
+            --card: #FFFFFF;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(46, 125, 50, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3);
+        }
+        
+        .material-input {
+            min-height: 300px;
+            resize: vertical;
+            font-family: 'Consolas', monospace;
+            line-height: 1.6;
+        }
+        
+        .format-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .format-card:hover, .format-card.active {
+            border-color: var(--primary);
+            background: rgba(46, 125, 50, 0.05);
+        }
+        
+        .format-card.active {
+            background: rgba(46, 125, 50, 0.1);
+        }
+        
+        .preview-section {
+            border-left: 3px solid var(--primary);
+            padding-left: 1rem;
+            margin: 0.5rem 0;
+        }
+        
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .spinner {
+            width: 50px; height: 50px;
+            border: 4px solid #E8F5E9;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .drop-zone {
+            border: 2px dashed #81C784;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(46, 125, 50, 0.05);
+        }
+        
+        .success-badge {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        }
+        
+        .feature-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner mb-4"></div>
+        <p class="text-lg text-gray-600 font-medium">Aligning your material...</p>
+        <p class="text-sm text-gray-400 mt-2">This may take a few moments</p>
+    </div>
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">ClimateLenz</h1>
+            </div>
+            <p class="text-lg text-gray-600">Align & Paste Tool — Transform copied material into structured documents</p>
+            <div class="mt-3 inline-flex items-center gap-2 px-4 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                <i class="fas fa-check-circle"></i>
+                <span>CSRD / ESRS Reporting Ready</span>
+            </div>
+        </header>
+
+        <!-- Features Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="glass-card rounded-xl p-4 text-center">
+                <div class="feature-icon mx-auto mb-2">
+                    <i class="fas fa-copy"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-700">Paste Material</p>
+                <p class="text-xs text-gray-500">Any copied text</p>
+            </div>
+            <div class="glass-card rounded-xl p-4 text-center">
+                <div class="feature-icon mx-auto mb-2">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-700">Use Templates</p>
+                <p class="text-xs text-gray-500">Word, Excel, PPT</p>
+            </div>
+            <div class="glass-card rounded-xl p-4 text-center">
+                <div class="feature-icon mx-auto mb-2">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-700">Auto-Align</p>
+                <p class="text-xs text-gray-500">Smart formatting</p>
+            </div>
+            <div class="glass-card rounded-xl p-4 text-center">
+                <div class="feature-icon mx-auto mb-2">
+                    <i class="fas fa-download"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-700">Download</p>
+                <p class="text-xs text-gray-500">All formats</p>
+            </div>
+        </div>
+
+        <!-- Main Form -->
+        <form id="alignForm" class="space-y-6">
+            <!-- Step 1: Paste Material -->
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center font-bold">1</div>
+                    <h2 class="text-xl font-bold text-gray-800">Paste Your Material</h2>
+                </div>
+                <p class="text-sm text-gray-500 mb-3">Copy any text, report content, or raw material here. The tool will auto-detect sections and structure.</p>
+                <textarea 
+                    name="material" 
+                    id="materialInput"
+                    class="material-input w-full p-4 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition-colors"
+                    placeholder="Paste your material here...
+
+Example:
+1. Executive Summary
+ClimateLenz provides CSRD reporting...
+
+2. Scope and Methodology
+Our approach covers E1, E2, S1 standards...
+
+3. Findings
+The supply chain analysis reveals..."
+                ></textarea>
+                <div class="flex justify-between mt-2">
+                    <span class="text-xs text-gray-400" id="charCount">0 characters</span>
+                    <button type="button" id="previewBtn" class="text-sm text-green-600 hover:text-green-800 font-medium">
+                        <i class="fas fa-eye mr-1"></i>Preview Structure
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Upload Template (Optional) -->
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center font-bold">2</div>
+                    <h2 class="text-xl font-bold text-gray-800">Upload Template (Optional)</h2>
+                </div>
+                <p class="text-sm text-gray-500 mb-3">Have a Word, Excel, or PowerPoint template? Upload it and we'll align your material into it.</p>
+                <div class="drop-zone rounded-xl p-8 text-center" id="dropZone">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-green-400 mb-3"></i>
+                    <p class="text-gray-600 font-medium">Drag & drop your template here</p>
+                    <p class="text-sm text-gray-400 mt-1">or</p>
+                    <input type="file" name="template" id="templateInput" accept=".docx,.xlsx,.pptx" class="hidden">
+                    <button type="button" onclick="document.getElementById('templateInput').click()" class="mt-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">
+                        Browse Files
+                    </button>
+                    <p class="text-xs text-gray-400 mt-2">Supported: .docx, .xlsx, .pptx</p>
+                </div>
+                <div id="fileInfo" class="hidden mt-3 p-3 bg-green-50 rounded-lg flex items-center gap-3">
+                    <i class="fas fa-file text-green-600"></i>
+                    <span class="text-sm text-gray-700" id="fileName"></span>
+                    <button type="button" onclick="clearFile()" class="ml-auto text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Choose Format -->
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center font-bold">3</div>
+                    <h2 class="text-xl font-bold text-gray-800">Choose Output Format</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="format-card active rounded-xl p-5 border-2" data-format="docx" onclick="selectFormat('docx')">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fas fa-file-word text-2xl text-blue-600"></i>
+                            <div>
+                                <p class="font-bold text-gray-800">Microsoft Word</p>
+                                <p class="text-xs text-gray-500">.docx format</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">Best for reports, proposals, and formal documents. Auto-formatted with headings and styles.</p>
+                    </div>
+                    <div class="format-card rounded-xl p-5 border-2" data-format="xlsx" onclick="selectFormat('xlsx')">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fas fa-file-excel text-2xl text-green-600"></i>
+                            <div>
+                                <p class="font-bold text-gray-800">Microsoft Excel</p>
+                                <p class="text-xs text-gray-500">.xlsx format</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">Best for data tables, structured content, and tracking sheets. Sections become rows.</p>
+                    </div>
+                    <div class="format-card rounded-xl p-5 border-2" data-format="pptx" onclick="selectFormat('pptx')">
+                        <div class="flex items-center gap-3 mb-3">
+                            <i class="fas fa-file-powerpoint text-2xl text-orange-600"></i>
+                            <div>
+                                <p class="font-bold text-gray-800">Microsoft PowerPoint</p>
+                                <p class="text-xs text-gray-500">.pptx format</p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">Best for presentations, client pitches, and visual summaries. Each section = one slide.</p>
+                    </div>
+                </div>
+                <input type="hidden" name="format" id="formatInput" value="docx">
+            </div>
+
+            <!-- Alignment Options -->
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-lg flex items-center justify-center font-bold">4</div>
+                    <h2 class="text-xl font-bold text-gray-800">Alignment Options</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-green-200 bg-green-50 cursor-pointer">
+                        <input type="radio" name="align_mode" value="auto" checked class="mt-1">
+                        <div>
+                            <p class="font-medium text-gray-800">Auto-Detect</p>
+                            <p class="text-sm text-gray-600">Automatically detect sections, headings, and lists from your material.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-green-300 cursor-pointer transition-colors">
+                        <input type="radio" name="align_mode" value="preserve" class="mt-1">
+                        <div>
+                            <p class="font-medium text-gray-800">Preserve Structure</p>
+                            <p class="text-sm text-gray-600">Keep the exact line-by-line structure as provided. Minimal formatting changes.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col md:flex-row gap-4">
+                <button type="submit" class="btn-primary flex-1 py-4 px-6 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-magic"></i>
+                    Generate & Download
+                </button>
+                <button type="button" onclick="downloadAll()" class="flex-1 py-4 px-6 rounded-xl border-2 border-green-600 text-green-700 font-bold text-lg hover:bg-green-50 transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-download"></i>
+                    Download All Formats
+                </button>
+            </div>
+        </form>
+
+        <!-- Preview Panel -->
+        <div id="previewPanel" class="hidden glass-card rounded-2xl p-6 mt-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-eye text-green-600 mr-2"></i>Structure Preview
+                </h3>
+                <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="previewContent" class="space-y-3"></div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 pb-8">
+            <p class="text-sm text-gray-500">ClimateLenz Align & Paste Tool v1.0</p>
+            <p class="text-xs text-gray-400 mt-1">Built for CSRD / ESRS sustainability reporting</p>
+        </footer>
+    </div>
+
+    <script>
+        // Format selection
+        function selectFormat(format) {
+            document.querySelectorAll('.format-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.querySelector(`[data-format="${format}"]`).classList.add('active');
+            document.getElementById('formatInput').value = format;
+        }
+
+        // File upload handling
+        const dropZone = document.getElementById('dropZone');
+        const templateInput = document.getElementById('templateInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                templateInput.files = files;
+                showFileInfo(files[0]);
+            }
+        });
+
+        templateInput.addEventListener('change', () => {
+            if (templateInput.files.length) {
+                showFileInfo(templateInput.files[0]);
+            }
+        });
+
+        function showFileInfo(file) {
+            fileName.textContent = file.name;
+            fileInfo.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+        }
+
+        function clearFile() {
+            templateInput.value = '';
+            fileInfo.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+        }
+
+        // Character count
+        const materialInput = document.getElementById('materialInput');
+        const charCount = document.getElementById('charCount');
+        materialInput.addEventListener('input', () => {
+            charCount.textContent = `${materialInput.value.length} characters`;
+        });
+
+        // Preview functionality
+        document.getElementById('previewBtn').addEventListener('click', async () => {
+            const material = materialInput.value.trim();
+            if (!material) {
+                alert('Please paste some material first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('material', material);
+
+            try {
+                const response = await fetch('/preview', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                const previewContent = document.getElementById('previewContent');
+                previewContent.innerHTML = `
+                    <div class="mb-4 p-3 bg-green-50 rounded-lg">
+                        <p class="text-sm font-medium text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Detected ${data.total_sections} sections with ${data.total_lines} total lines
+                        </p>
+                    </div>
+                    ${data.sections.map((section, idx) => `
+                        <div class="preview-section">
+                            <p class="font-bold text-gray-800">${idx + 1}. ${section.title}</p>
+                            <p class="text-sm text-gray-500">${section.line_count} lines</p>
+                            <p class="text-sm text-gray-600 mt-1">${section.preview}</p>
+                        </div>
+                    `).join('')}
+                `;
+                document.getElementById('previewPanel').classList.remove('hidden');
+                document.getElementById('previewPanel').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert('Preview failed: ' + error.message);
+            }
+        });
+
+        function closePreview() {
+            document.getElementById('previewPanel').classList.add('hidden');
+        }
+
+        // Form submission
+        document.getElementById('alignForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const material = materialInput.value.trim();
+            if (!material) {
+                alert('Please paste your material first');
+                return;
+            }
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            const formData = new FormData(e.target);
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = 'climatelenz_report';
+                    if (contentDisposition) {
+                        const match = contentDisposition.match(/filename="?(.+)"?/);
+                        if (match) filename = match[1];
+                    }
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Processing failed');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        });
+
+        // Download all formats
+        async function downloadAll() {
+            const material = materialInput.value.trim();
+            if (!material) {
+                alert('Please paste your material first');
+                return;
+            }
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.querySelector('.loading-overlay p').textContent = 'Generating all formats...';
+
+            const formData = new FormData();
+            formData.append('material', material);
+
+            try {
+                const response = await fetch('/download-all', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'climatelenz_all_formats.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Download failed');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.querySelector('.loading-overlay p').textContent = 'Aligning your material...';
+            }
+        }
+    </script>
+</body>
+</html>
