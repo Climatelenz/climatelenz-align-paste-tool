@@ -3,21 +3,3 @@ python-docx==1.1.0
 openpyxl==3.1.2
 python-pptx==0.6.23
 werkzeug==3.0.1
-
-
-| Package               | Purpose                                               |
-| --------------------- | ----------------------------------------------------- |
-| `flask==3.0.0`        | Web framework — runs the app and serves the interface |
-| `python-docx==1.1.0`  | Reads/writes Microsoft Word (.docx) files             |
-| `openpyxl==3.1.2`     | Reads/writes Microsoft Excel (.xlsx) files            |
-| `python-pptx==0.6.23` | Reads/writes Microsoft PowerPoint (.pptx) files       |
-| `werkzeug==3.0.1`     | WSGI utilities — handles file uploads, security       |
-
-
-pip install -r requirements.txt
-
-flask
-python-docx
-openpyxl
-python-pptx
-werkzeug
